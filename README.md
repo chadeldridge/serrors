@@ -34,37 +34,34 @@ import (
 )
 
 func main() {
+    // TextHandler with keys to uppercase HandlerOption
+	tErrs := serrors.NewTextHandler(os.Stdout, &slog.HandlerOptions{ReplaceAttr: serrors.UpperCaseKey})
+
+    // JSONHandler in a struct with no HandlerOptions
 	jErrs := struct {
 		Errors serrors.SErrors `json:"errors"`
 	}{
-		Errors: serrors.New(os.Stdout, nil),
-	}
-
-	tErrs := struct {
-		Errors serrors.SErrors
-	}{
-		Errors: serrors.NewTextHandler(os.Stdout, &slog.HandlerOptions{ReplaceAttr: serrors.UpperCaseKey}),
+		serrors.New(os.Stdout, nil),
 	}
 
 	errs := doStuff()
 
-	fmt.Println("JSON object")
-	jErrs.Errors.Append(errs)
-	j, _ := json.Marshal(jErrs)
-	fmt.Println(string(j))
+	fmt.Println("Text Logging")
+	tErrs.Append(errs)
+	tErrs.Log()
 
 	fmt.Println("\nJSON Logging")
+	jErrs.Errors.Append(errs)
 	jErrs.Errors.Log()
 
-	fmt.Println("\nText Logging")
-	tErrs.Errors.Append(errs)
-	tErrs.Errors.Log()
+	fmt.Println("\nJSON object")
+	j, _ := json.Marshal(jErrs)
+	fmt.Println(string(j))
 }
 
 func doStuff() serrors.SErrors {
 	errs := doMore()
-	// if !errs.IsEmpty() {
-	if len(errs.Errors) > 0 {
+	if !errs.IsEmpty() {
 		errs.WarnAny(time.Now(), "doMore failed to do more", "failed", true, "code", 500)
 	}
 
@@ -80,14 +77,14 @@ func doMore() serrors.SErrors {
 
 Output
 ```
-JSON object
-{"errors":[{"time":"2023-09-28T13:41:22.546518213-04:00","level":"ERROR","msg":"error was inevitable","failed":true,"code":500},{"time":"2023-09-28T13:41:22.546519365-04:00","level":"WARN","msg":"doMore failed to do more","failed":true,"code":500}]}
+Text Logging
+TIME=2023-09-28T13:48:50.220-04:00 LEVEL=ERROR MSG="error was inevitable" FAILED=true CODE=500
+TIME=2023-09-28T13:48:50.220-04:00 LEVEL=WARN MSG="doMore failed to do more" FAILED=true CODE=500
 
 JSON Logging
-{"time":"2023-09-28T13:41:22.546518213-04:00","level":"ERROR","msg":"error was inevitable","failed":true,"code":500}
-{"time":"2023-09-28T13:41:22.546519365-04:00","level":"WARN","msg":"doMore failed to do more","failed":true,"code":500}
+{"time":"2023-09-28T13:48:50.220545992-04:00","level":"ERROR","msg":"error was inevitable","failed":true,"code":500}
+{"time":"2023-09-28T13:48:50.220547194-04:00","level":"WARN","msg":"doMore failed to do more","failed":true,"code":500}
 
-Text Logging
-TIME=2023-09-28T13:41:22.546-04:00 LEVEL=ERROR MSG="error was inevitable" FAILED=true CODE=500
-TIME=2023-09-28T13:41:22.546-04:00 LEVEL=WARN MSG="doMore failed to do more" FAILED=true CODE=500
+JSON object
+{"errors":[{"time":"2023-09-28T13:48:50.220545992-04:00","level":"ERROR","msg":"error was inevitable","failed":true,"code":500},{"time":"2023-09-28T13:48:50.220547194-04:00","level":"WARN","msg":"doMore failed to do more","failed":true,"code":500}]}
 ```
