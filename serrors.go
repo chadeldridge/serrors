@@ -159,6 +159,8 @@ func (e *SErrors) Append(errs SErrors) {
 	e.Errors = append(e.Errors, errs.Errors...)
 }
 
+func (e SErrors) IsEmpty() bool { return len(e.Errors) < 1 }
+
 // String returns all e.Errors as a sing string
 func (e SErrors) String() string {
 	var s string
